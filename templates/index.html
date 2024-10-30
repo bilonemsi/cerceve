@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Akıllı Çerçeve</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            background-color: #222; 
+            color: white; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0;
+            overflow: hidden;
+        }
+        #slideshow {
+            width: 800px; 
+            height: 480px; 
+            position: relative; 
+            background-color: black;
+        }
+        #slideshow img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%; 
+            height: 100%; 
+            object-fit: contain;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+        #slideshow img.visible { 
+            opacity: 1;
+        }
+        .weather {
+            position: absolute; 
+            top: 10px; 
+            right: 10px; 
+            font-size: 1.2em;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div id="slideshow">
+        <!-- Çift img öğesi, geçiş için -->
+        <img id="image1" alt="Slideshow Image">
+        <img id="image2" alt="Slideshow Image" style="display: none;">
+        
+        <div class="weather">
+            {% if weather %}
+                Bursa: {{ weather.temperature }}°C, Kod: {{ weather.description }}
+            {% else %}
+                Hava durumu alınamadı.
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        const imageUrls = [
+            {% for image in images %}
+                "{{ url_for('static', filename=image) }}",
+            {% endfor %}
+        ];
+        
+        let currentIndex = 0;
+        let currentImageElement = document.getElementById('image1');
+        let nextImageElement = document.getElementById('image2');
+
+        function showNextImage() {
+            // Bir sonraki görsel URL'sini al ve yeni görseli yükle
+            const nextImageUrl = imageUrls[currentIndex];
+            const img = new Image();
+            img.src = nextImageUrl;
+            img.onload = () => {
+                // Yüklenen resmi nextImageElement'e aktar
+                nextImageElement.src = nextImageUrl;
+                nextImageElement.style.display = 'block';
+                
+                // Yeni görseli belirginleştir, mevcut görseli solgunlaştır
+                nextImageElement.classList.add('visible');
+                currentImageElement.classList.remove('visible');
+
+                // Eski ve yeni görseli değiştir
+                [currentImageElement, nextImageElement] = [nextImageElement, currentImageElement];
+                nextImageElement.style.display = 'none'; // Geçmiş resmi gizle
+                
+                // İndeksi güncelle
+                currentIndex = (currentIndex + 1) % imageUrls.length;
+            };
+        }
+
+        // İlk resmi göster
+        showNextImage();
+        
+        // Her 5 saniyede bir resmi değiştir
+        setInterval(showNextImage, 5000);
+    </script>
+</body>
+</html>
